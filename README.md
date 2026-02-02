@@ -41,9 +41,26 @@ docker compose up --build
 - Postgres exposto em `localhost:5432` (user/password: `postgres`)
 - Configure sua API para usar `Host=localhost;Port=5432;Database=bela_design_hub;Username=postgres;Password=postgres`
 
+## Funcionalidades atuais
+
+- **Clientes**: CRUD completo com validação básica e timestamps.
+- **Pedidos/Vendas**: cadastro com itens, cálculo de valor total, filtros por cliente/status/período e atualização de status.
+- **Gastos**: registro de despesas com categoria, data e notas, além de listagem filtrada por período/categoria.
+
+Endpoints expostos em `http://localhost:5034/swagger` quando a API está em execução.
+
+## Testes automatizados
+
+```bash
+cd backend
+dotnet test
+```
+
+Os testes utilizam `WebApplicationFactory` e banco em memória para validar os principais endpoints de clientes, pedidos e gastos.
+
 ## Próximos passos
 
-1. Configurar `.gitignore`, `.editorconfig` e variáveis de ambiente.
-2. Scaffold da API ASP.NET Core + EF Core (Clientes + Auth).
-3. Criar SPA com Vite + autenticação básica e tela de clientes.
-4. Evoluir módulos de pedidos/encomendas e gastos.
+1. Adicionar autenticação/autorizações básicas na API.
+2. Criar SPA com Vite + autenticação básica e tela de clientes/pedidos.
+3. Construir relatórios/dashboards (controle financeiro e pipeline de pedidos).
+4. Automatizar CI/CD (lint, testes e build de imagens Docker).
