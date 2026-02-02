@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BelaDesignHub.Api", "BelaDesignHub.Api\BelaDesignHub.Api.csproj", "{1069D1DD-531F-4295-B1FE-D0B6EC03E9AD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1069D1DD-531F-4295-B1FE-D0B6EC03E9AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1069D1DD-531F-4295-B1FE-D0B6EC03E9AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1069D1DD-531F-4295-B1FE-D0B6EC03E9AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1069D1DD-531F-4295-B1FE-D0B6EC03E9AD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

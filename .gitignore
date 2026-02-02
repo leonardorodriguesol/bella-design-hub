@@ -1,0 +1,52 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Dependency directories
+node_modules/
+packages-lock.json
+.yarn/
+.pnp*
+
+# Build outputs
+/dist
+/build
+/.next
+/out
+coverage/
+*.tsbuildinfo
+
+# Vite/React
+vite.config.ts.timestamp-*
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# VS/VSCode
+.vscode/
+.vs/
+
+dist/
+Debug/
+Release/
+
+# Environment files
+.env
+.env.*
+
+# Docker artifacts
+*.pid
+*.seed
+
+# OS
+Thumbs.db
+.DS_Store
