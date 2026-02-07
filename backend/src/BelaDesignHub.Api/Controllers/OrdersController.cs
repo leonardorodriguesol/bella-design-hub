@@ -127,6 +127,7 @@ public class OrdersController(ApplicationDbContext context) : ControllerBase
         }).ToList();
 
         order.Items = updatedItems;
+        await _context.OrderItems.AddRangeAsync(updatedItems, cancellationToken);
         order.TotalAmount = updatedItems.Sum(i => i.Total);
 
         await _context.SaveChangesAsync(cancellationToken);

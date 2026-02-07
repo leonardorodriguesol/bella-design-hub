@@ -2,9 +2,31 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BelaDesignHub.Application.Models.Requests;
 
-public record CreateCustomerRequest(
-    [Required][MaxLength(150)] string Name,
-    [EmailAddress][MaxLength(150)] string? Email,
-    [MaxLength(40)] string? Phone,
-    [MaxLength(300)] string? Address
-);
+public record class CreateCustomerRequest
+{
+    public CreateCustomerRequest()
+    {
+    }
+
+    public CreateCustomerRequest(string name, string? email, string? phone, string? address)
+    {
+        Name = name;
+        Email = email;
+        Phone = phone;
+        Address = address;
+    }
+
+    [Required(AllowEmptyStrings = false)]
+    [MaxLength(150)]
+    public string Name { get; init; } = string.Empty;
+
+    [EmailAddress]
+    [MaxLength(150)]
+    public string? Email { get; init; }
+
+    [MaxLength(40)]
+    public string? Phone { get; init; }
+
+    [MaxLength(300)]
+    public string? Address { get; init; }
+}
