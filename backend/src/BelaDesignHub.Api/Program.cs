@@ -9,6 +9,19 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy.WithOrigins(
+                "http://localhost:5173",
+                "http://localhost:5174",
+                "http://backend:5173",
+                "http://frontend:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -37,6 +50,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("Frontend");
 
 app.MapControllers();
 app.MapHealthChecks("/health");
