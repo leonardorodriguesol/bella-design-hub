@@ -1,6 +1,8 @@
 services:
   backend:
     image: ${BELAHUB_BACKEND_IMAGE:-leonardodfg12/bela-design-hub-backend:latest}
+    container_name: backend
+    pull_policy: always
     depends_on:
       postgres:
         condition: service_healthy
@@ -13,6 +15,8 @@ services:
 
   frontend:
     image: ${BELAHUB_FRONT_IMAGE:-leonardodfg12/bela-design-hub-frontend:latest}
+    container_name: frontend
+    pull_policy: always
     depends_on:
       backend:
         condition: service_started
@@ -23,6 +27,7 @@ services:
 
   postgres:
     image: postgres:16-alpine
+    container_name: postgres
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
