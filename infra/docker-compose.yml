@@ -1,6 +1,6 @@
 services:
   backend:
-    image: ${BELAHUB_IMAGE:-leonardodfg12/bela-design-hub-backend:latest}
+    image: ${BELAHUB_BACKEND_IMAGE:-leonardodfg12/bela-design-hub-backend:latest}
     depends_on:
       postgres:
         condition: service_healthy
@@ -9,6 +9,16 @@ services:
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=bela_design_hub;Username=postgres;Password=postgres
     ports:
       - "8080:8080"
+
+  frontend:
+    image: ${BELAHUB_FRONT_IMAGE:-leonardodfg12/bela-design-hub-frontend:latest}
+    depends_on:
+      backend:
+        condition: service_started
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080
+    ports:
+      - "5173:80"
 
   postgres:
     image: postgres:16-alpine
