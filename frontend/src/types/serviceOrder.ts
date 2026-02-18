@@ -54,6 +54,8 @@ export interface CreateServiceOrderInput {
   }>
 }
 
+export type UpdateServiceOrderInput = CreateServiceOrderInput
+
 export interface UpdateServiceOrderStatusInput {
   status: ServiceOrderStatus
 }

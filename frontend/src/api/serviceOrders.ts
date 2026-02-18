@@ -3,6 +3,7 @@ import type {
   CreateServiceOrderInput,
   ServiceOrder,
   ServiceOrderStatus,
+  UpdateServiceOrderInput,
   UpdateServiceOrderStatusInput,
 } from '../types/serviceOrder'
 
@@ -63,6 +64,14 @@ export const serviceOrdersApi = {
   create: async (payload: CreateServiceOrderInput) => {
     const { data } = await httpClient.post<ServiceOrderApiResponse>('/api/serviceOrders', payload)
     return mapServiceOrder(data)
+  },
+  update: async (id: string, payload: UpdateServiceOrderInput) => {
+    const { data } = await httpClient.put<ServiceOrderApiResponse>(`/api/serviceOrders/${id}`, payload)
+    return mapServiceOrder(data)
+  },
+  remove: async (id: string) => {
+    await httpClient.delete(`/api/serviceOrders/${id}`)
+    return id
   },
   updateStatus: async (id: string, payload: UpdateServiceOrderStatusInput) => {
     const serialized = {

@@ -102,6 +102,7 @@ const getPrintableAdditionalItems = (serviceOrder: ServiceOrder | null): Printab
 
 export const ServiceOrders = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [editingOrder, setEditingOrder] = useState<ServiceOrder | null>(null)
   const [selectedOrder, setSelectedOrder] = useState<ServiceOrder | null>(null)
   const [orderForPrint, setOrderForPrint] = useState<ServiceOrder | null>(null)
   const [createError, setCreateError] = useState<string | null>(null)
@@ -111,7 +112,11 @@ export const ServiceOrders = () => {
   const { data: customers } = useCustomers()
   const { data: ordersData } = useOrders()
   const { data: serviceOrders, isLoading, error } = useServiceOrders()
-  const { create: createServiceOrder } = useServiceOrderMutations()
+  const {
+    create: createServiceOrder,
+    update: updateServiceOrder,
+    remove: removeServiceOrder,
+  } = useServiceOrderMutations()
 
   const customerMap = useMemo(() => {
     if (!customers) return {}
@@ -178,17 +183,35 @@ export const ServiceOrders = () => {
     setTimeout(() => setFeedback(null), 4000)
   }
 
+  const openCreateModal = () => {
+    setCreateError(null)
+    setEditingOrder(null)
+    setIsCreateOpen(true)
+  }
+
+  const openEditModal = (serviceOrder: ServiceOrder) => {
+    setCreateError(null)
+    setEditingOrder(serviceOrder)
+    setIsCreateOpen(true)
+  }
+
+  const closeFormModal = () => {
+    setCreateError(null)
+    setEditingOrder(null)
+    setIsCreateOpen(false)
+  }
+
   const handlePrint = (serviceOrder: ServiceOrder) => {
     setOrderForPrint(serviceOrder)
     setTimeout(() => window.print(), 40)
   }
 
-  const handleCreate = async (values: ServiceOrderFormValues) => {
+  const handleSubmitForm = async (values: ServiceOrderFormValues) => {
     setCreateError(null)
     const order = values.orderId ? orderMap.get(values.orderId) : null
 
     if (!order) {
-      const message = 'Pedido não encontrado para gerar a OS.'
+      const message = editingOrder ? 'Pedido não encontrado para atualizar a OS.' : 'Pedido não encontrado para gerar a OS.'
       setCreateError(message)
       showMessage(message, 'error')
       return
@@ -212,18 +235,71 @@ export const ServiceOrders = () => {
     }
 
     try {
-      await createServiceOrder.mutateAsync(payload)
-      showMessage('Ordem de serviço criada com sucesso!')
-      setIsCreateOpen(false)
+      if (editingOrder) {
+        await updateServiceOrder.mutateAsync({ id: editingOrder.id, payload })
+        showMessage('Ordem de serviço atualizada com sucesso!')
+        if (selectedOrder?.id === editingOrder.id) {
+          setSelectedOrder(null)
+        }
+      } else {
+        await createServiceOrder.mutateAsync(payload)
+        showMessage('Ordem de serviço criada com sucesso!')
+      }
+
+      closeFormModal()
     } catch (err) {
-      const message = getApiErrorMessage(err, 'Erro ao criar ordem de serviço.')
+      const message = getApiErrorMessage(
+        err,
+        editingOrder ? 'Erro ao atualizar ordem de serviço.' : 'Erro ao criar ordem de serviço.',
+      )
       setCreateError(message)
+      showMessage(message, 'error')
+    }
+  }
+
+  const handleDelete = async (serviceOrder: ServiceOrder) => {
+    const shouldDelete = window.confirm(
+      `Deseja excluir a ordem de serviço ${serviceOrder.order?.code ?? serviceOrder.id.slice(0, 8)}?`,
+    )
+    if (!shouldDelete) return
+
+    try {
+      await removeServiceOrder.mutateAsync(serviceOrder.id)
+      showMessage('Ordem de serviço excluída com sucesso!')
+
+      if (selectedOrder?.id === serviceOrder.id) {
+        setSelectedOrder(null)
+      }
+      if (editingOrder?.id === serviceOrder.id) {
+        closeFormModal()
+      }
+    } catch (err) {
+      const message = getApiErrorMessage(err, 'Erro ao excluir ordem de serviço.')
       showMessage(message, 'error')
     }
   }
 
   const displayedOrders = serviceOrders ?? []
   const showEmptyState = !isLoading && !error && displayedOrders.length === 0
+  const formDefaultValues = useMemo<Partial<ServiceOrderFormValues> | undefined>(() => {
+    if (!editingOrder) return undefined
+
+    return {
+      customerId: editingOrder.customerId,
+      orderId: editingOrder.orderId,
+      scheduledDate: editingOrder.scheduledDate,
+      responsible: editingOrder.responsible ?? '',
+      notes: editingOrder.notes ?? '',
+      extraItems: editingOrder.items
+        .filter((item) => !item.orderItemId)
+        .map((item) => ({
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: Number(item.unitPrice ?? 0),
+        })),
+    }
+  }, [editingOrder])
+  const isSubmittingForm = createServiceOrder.isPending || updateServiceOrder.isPending
 
   return (
     <>
@@ -236,7 +312,7 @@ export const ServiceOrders = () => {
             <button
               type="button"
               className="inline-flex items-center gap-2 rounded-2xl bg-brand-500 px-5 py-2 text-sm font-bold text-white shadow hover:bg-brand-400"
-              onClick={() => setIsCreateOpen(true)}
+              onClick={openCreateModal}
               disabled={!ordersForForm.length}
             >
               <span aria-hidden>＋</span>
@@ -303,7 +379,7 @@ export const ServiceOrders = () => {
                       <td className="px-6 py-4 text-brand-600">{formatDate(serviceOrder.scheduledDate)}</td>
                       <td className="px-6 py-4 text-brand-600">{serviceOrder.responsible ?? 'Não informado'}</td>
                       <td className="px-6 py-4 text-right text-sm">
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-2 flex-wrap">
                           <button
                             type="button"
                             className="rounded-full border border-brand-100 px-3 py-1 text-sm font-semibold text-brand-500 hover:bg-brand-50"
@@ -314,9 +390,24 @@ export const ServiceOrders = () => {
                           <button
                             type="button"
                             className="rounded-full border border-brand-100 px-3 py-1 text-sm font-semibold text-brand-500 hover:bg-brand-50"
+                            onClick={() => openEditModal(serviceOrder)}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            className="rounded-full border border-brand-100 px-3 py-1 text-sm font-semibold text-brand-500 hover:bg-brand-50"
                             onClick={() => handlePrint(serviceOrder)}
                           >
                             Imprimir
+                          </button>
+                          <button
+                            type="button"
+                            className="rounded-full border border-red-200 px-3 py-1 text-sm font-semibold text-red-500 hover:bg-red-50 disabled:opacity-60"
+                            onClick={() => handleDelete(serviceOrder)}
+                            disabled={removeServiceOrder.isPending}
+                          >
+                            Excluir
                           </button>
                         </div>
                       </td>
@@ -332,13 +423,15 @@ export const ServiceOrders = () => {
             <div className="w-full max-w-2xl rounded-3xl border border-brand-100 bg-white p-6 shadow-2xl">
               <div className="mb-4 flex items-center justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.4em] text-brand-400">Nova OS</p>
-                  <h3 className="text-xl font-semibold text-brand-700">Gerar ordem de serviço</h3>
+                  <p className="text-xs uppercase tracking-[0.4em] text-brand-400">{editingOrder ? 'Editar OS' : 'Nova OS'}</p>
+                  <h3 className="text-xl font-semibold text-brand-700">
+                    {editingOrder ? 'Editar ordem de serviço' : 'Gerar ordem de serviço'}
+                  </h3>
                 </div>
                 <button
                   type="button"
                   className="text-sm font-semibold text-brand-500 hover:text-brand-700"
-                  onClick={() => setIsCreateOpen(false)}
+                  onClick={closeFormModal}
                 >
                   Fechar
                 </button>
@@ -353,8 +446,9 @@ export const ServiceOrders = () => {
               <ServiceOrderForm
                 customers={customers.map((customer) => ({ id: customer.id, name: customer.name }))}
                 orders={ordersForForm}
-                onSubmit={handleCreate}
-                isSubmitting={createServiceOrder.isPending}
+                defaultValues={formDefaultValues}
+                onSubmit={handleSubmitForm}
+                isSubmitting={isSubmittingForm}
               />
             </div>
           </div>
@@ -374,9 +468,24 @@ export const ServiceOrders = () => {
                 <button
                   type="button"
                   className="rounded-full border border-brand-100 px-4 py-1 text-sm font-semibold text-brand-500 hover:bg-brand-50"
+                  onClick={() => openEditModal(selectedOrder)}
+                >
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  className="rounded-full border border-brand-100 px-4 py-1 text-sm font-semibold text-brand-500 hover:bg-brand-50"
                   onClick={() => handlePrint(selectedOrder)}
                 >
                   Imprimir 2 vias
+                </button>
+                <button
+                  type="button"
+                  className="rounded-full border border-red-200 px-4 py-1 text-sm font-semibold text-red-500 hover:bg-red-50 disabled:opacity-60"
+                  onClick={() => handleDelete(selectedOrder)}
+                  disabled={removeServiceOrder.isPending}
+                >
+                  Excluir
                 </button>
                 <button
                   type="button"
@@ -457,7 +566,7 @@ export const ServiceOrders = () => {
             .print-view {
               color: #000;
               font-family: 'Arial', sans-serif;
-              padding: 24px;
+              padding: 12px;
               background: #fff;
               width: 100%;
               height: 100%;
@@ -465,81 +574,94 @@ export const ServiceOrders = () => {
             .print-wrapper {
               display: grid;
               grid-template-rows: repeat(2, 1fr);
-              gap: 16px;
+              gap: 8px;
               height: 100%;
             }
             .print-copy {
               border: 2px solid #000;
-              padding: 14px 16px;
+              padding: 10px;
               min-height: calc(50vh - 20px);
               display: flex;
               flex-direction: column;
-              gap: 10px;
+              gap: 6px;
+              box-sizing: border-box;
             }
             .print-header {
               display: flex;
               justify-content: space-between;
-              align-items: flex-start;
+              align-items: center;
             }
             .print-company {
               font-weight: 700;
               text-transform: uppercase;
               letter-spacing: 0.06em;
               margin: 0;
+              font-size: 0.86rem;
             }
             .print-subtitle {
-              margin: 4px 0 0;
-              font-size: 0.78rem;
+              margin: 2px 0 0;
+              font-size: 0.68rem;
               text-transform: uppercase;
               letter-spacing: 0.05em;
             }
             .print-identifier {
               border: 1px solid #000;
-              padding: 6px 10px;
+              padding: 4px 8px;
               text-align: center;
-              font-size: 0.8rem;
+              font-size: 0.7rem;
               line-height: 1.3;
             }
             .print-identifier strong {
               display: block;
-              font-size: 0.95rem;
+              font-size: 0.82rem;
+            }
+            .print-info-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 6px;
             }
             .print-info {
               width: 100%;
               border-collapse: collapse;
-              font-size: 0.78rem;
+              font-size: 0.67rem;
             }
             .print-info td {
               border: 1px solid #000;
-              padding: 4px 6px;
+              padding: 2px 4px;
             }
             .print-info td:first-child {
-              width: 160px;
+              width: 72px;
               font-weight: 600;
               background: #f7f7f7;
             }
+            .print-sections-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 6px;
+            }
             .print-section {
               border: 1px solid #000;
-              padding: 6px 8px;
-              font-size: 0.78rem;
+              padding: 4px;
+              font-size: 0.67rem;
             }
             .print-section h4 {
               margin: 0;
-              font-size: 0.78rem;
+              font-size: 0.66rem;
               text-transform: uppercase;
-              margin-bottom: 4px;
+              margin-bottom: 2px;
             }
             .print-items {
               width: 100%;
               border-collapse: collapse;
-              margin-top: 4px;
-              font-size: 0.78rem;
+              margin-top: 2px;
+              font-size: 0.65rem;
             }
             .print-items th,
             .print-items td {
               border: 1px solid #000;
-              padding: 4px;
+              padding: 2px 3px;
               text-align: left;
+              line-height: 1.2;
             }
             .print-items tfoot td {
               font-weight: 700;
@@ -547,26 +669,26 @@ export const ServiceOrders = () => {
             }
             .print-note {
               border: 1px solid #000;
-              padding: 6px;
-              font-size: 0.78rem;
-              min-height: 38px;
+              padding: 4px;
+              font-size: 0.66rem;
+              min-height: 24px;
             }
             .print-summary {
               display: grid;
               grid-template-columns: 1fr 1fr auto;
-              gap: 8px;
-              font-size: 0.78rem;
+              gap: 6px;
+              font-size: 0.66rem;
             }
             .print-summary span {
               border: 1px solid #000;
-              padding: 6px;
+              padding: 4px;
             }
             .print-signatures {
               display: flex;
               justify-content: space-between;
-              gap: 24px;
-              margin-top: 8px;
-              font-size: 0.78rem;
+              gap: 16px;
+              margin-top: 4px;
+              font-size: 0.66rem;
             }
             .print-signatures div {
               flex: 1;
@@ -574,8 +696,8 @@ export const ServiceOrders = () => {
             }
             .print-signature-line {
               border-top: 1px solid #000;
-              margin-top: 32px;
-              padding-top: 4px;
+              margin-top: 14px;
+              padding-top: 2px;
             }
           `}</style>
           <div className="print-wrapper">
@@ -603,104 +725,112 @@ export const ServiceOrders = () => {
                     </div>
                   </div>
 
-                  <table className="print-info">
-                    <tbody>
-                      <tr>
-                        <td>Cliente</td>
-                        <td>{customerName}</td>
-                      </tr>
-                      <tr>
-                        <td>Telefone</td>
-                        <td>{customerPhone}</td>
-                      </tr>
-                      <tr>
-                        <td>Email</td>
-                        <td>{customerEmail}</td>
-                      </tr>
-                      <tr>
-                        <td>Endereço</td>
-                        <td>{customerAddress}</td>
-                      </tr>
-                      <tr>
-                        <td>Data programada</td>
-                        <td>{formatDate(orderForPrint.scheduledDate)}</td>
-                      </tr>
-                      <tr>
-                        <td>Responsável</td>
-                        <td>{normalizeText(orderForPrint.responsible) || 'Não informado'}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-
-                  <section className="print-section">
-                    <h4>Descrição do produto</h4>
-                    <table className="print-items">
-                      <thead>
-                        <tr>
-                          <th style={{ width: '44%' }}>Descrição</th>
-                          <th style={{ width: '12%' }}>Qtd</th>
-                          <th style={{ width: '22%' }}>Valor unit.</th>
-                          <th style={{ width: '22%' }}>Subtotal</th>
-                        </tr>
-                      </thead>
+                  <div className="print-info-grid">
+                    <table className="print-info">
                       <tbody>
-                        {printableProductItems.length ? (
-                          printableProductItems.map((item) => (
-                            <tr key={item.id ?? item.description}>
-                              <td>{item.description}</td>
-                              <td>{item.quantity}</td>
-                              <td>{formatCurrency(item.unitPrice)}</td>
-                              <td>{formatCurrency(item.unitPrice * item.quantity)}</td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan={4}>Nenhum produto vinculado.</td>
-                          </tr>
-                        )}
+                        <tr>
+                          <td>Cliente</td>
+                          <td>{customerName}</td>
+                        </tr>
+                        <tr>
+                          <td>Telefone</td>
+                          <td>{customerPhone}</td>
+                        </tr>
+                        <tr>
+                          <td>Endereço</td>
+                          <td>{customerAddress}</td>
+                        </tr>
                       </tbody>
-                      <tfoot>
-                        <tr>
-                          <td colSpan={4}>Total dos produtos: {formatCurrency(productsTotal)}</td>
-                        </tr>
-                      </tfoot>
                     </table>
-                  </section>
-
-                  <section className="print-section">
-                    <h4>Soma dos itens adicionais</h4>
-                    <table className="print-items">
-                      <thead>
-                        <tr>
-                          <th style={{ width: '44%' }}>Descrição</th>
-                          <th style={{ width: '12%' }}>Qtd</th>
-                          <th style={{ width: '22%' }}>Valor unit.</th>
-                          <th style={{ width: '22%' }}>Subtotal</th>
-                        </tr>
-                      </thead>
+                    <table className="print-info">
                       <tbody>
-                        {printableAdditionalItems.length ? (
-                          printableAdditionalItems.map((item) => (
-                            <tr key={item.id ?? item.description}>
-                              <td>{item.description}</td>
-                              <td>{item.quantity}</td>
-                              <td>{formatCurrency(item.unitPrice)}</td>
-                              <td>{formatCurrency(item.unitPrice * item.quantity)}</td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan={4}>Nenhum item adicional informado.</td>
-                          </tr>
-                        )}
-                      </tbody>
-                      <tfoot>
                         <tr>
-                          <td colSpan={4}>Soma dos itens adicionais: {formatCurrency(additionalItemsTotal)}</td>
+                          <td>Email</td>
+                          <td>{customerEmail}</td>
                         </tr>
-                      </tfoot>
+                        <tr>
+                          <td>Data</td>
+                          <td>{formatDate(orderForPrint.scheduledDate)}</td>
+                        </tr>
+                        <tr>
+                          <td>Resp.</td>
+                          <td>{normalizeText(orderForPrint.responsible) || 'Não informado'}</td>
+                        </tr>
+                      </tbody>
                     </table>
-                  </section>
+                  </div>
+
+                  <div className="print-sections-grid">
+                    <section className="print-section">
+                      <h4>Descrição do produto</h4>
+                      <table className="print-items">
+                        <thead>
+                          <tr>
+                            <th style={{ width: '44%' }}>Descrição</th>
+                            <th style={{ width: '12%' }}>Qtd</th>
+                            <th style={{ width: '22%' }}>Vlr. unit.</th>
+                            <th style={{ width: '22%' }}>Subtotal</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {printableProductItems.length ? (
+                            printableProductItems.map((item) => (
+                              <tr key={item.id ?? item.description}>
+                                <td>{item.description}</td>
+                                <td>{item.quantity}</td>
+                                <td>{formatCurrency(item.unitPrice)}</td>
+                                <td>{formatCurrency(item.unitPrice * item.quantity)}</td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={4}>Nenhum produto vinculado.</td>
+                            </tr>
+                          )}
+                        </tbody>
+                        <tfoot>
+                          <tr>
+                            <td colSpan={4}>Total dos produtos: {formatCurrency(productsTotal)}</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </section>
+
+                    <section className="print-section">
+                      <h4>Soma dos itens adicionais</h4>
+                      <table className="print-items">
+                        <thead>
+                          <tr>
+                            <th style={{ width: '44%' }}>Descrição</th>
+                            <th style={{ width: '12%' }}>Qtd</th>
+                            <th style={{ width: '22%' }}>Vlr. unit.</th>
+                            <th style={{ width: '22%' }}>Subtotal</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {printableAdditionalItems.length ? (
+                            printableAdditionalItems.map((item) => (
+                              <tr key={item.id ?? item.description}>
+                                <td>{item.description}</td>
+                                <td>{item.quantity}</td>
+                                <td>{formatCurrency(item.unitPrice)}</td>
+                                <td>{formatCurrency(item.unitPrice * item.quantity)}</td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={4}>Nenhum item adicional informado.</td>
+                            </tr>
+                          )}
+                        </tbody>
+                        <tfoot>
+                          <tr>
+                            <td colSpan={4}>Soma dos itens adicionais: {formatCurrency(additionalItemsTotal)}</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </section>
+                  </div>
 
                   <div className="print-note">
                     <strong>Observações: </strong>
