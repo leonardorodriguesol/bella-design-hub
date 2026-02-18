@@ -490,7 +490,17 @@ export const Production = () => {
             )}
 
             <ProductForm
-              defaultValues={editingProduct ? { name: editingProduct.name, description: editingProduct.description ?? '', parts: editingProduct.parts } : undefined}
+              defaultValues={
+                editingProduct
+                  ? {
+                      name: editingProduct.name,
+                      description: editingProduct.description ?? '',
+                      defaultSalePrice: editingProduct.defaultSalePrice,
+                      isActive: editingProduct.isActive,
+                      parts: editingProduct.parts,
+                    }
+                  : undefined
+              }
               onSubmit={editingProduct ? handleUpdateProduct : handleCreateProduct}
               isSubmitting={createProduct.isPending || updateProduct.isPending}
             />

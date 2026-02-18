@@ -9,6 +9,8 @@ export interface Product {
   id: string
   name: string
   description?: string | null
+  defaultSalePrice: number
+  isActive: boolean
   createdAt: string
   updatedAt?: string | null
   parts: ProductPart[]
@@ -23,6 +25,8 @@ export interface ProductPartInput {
 export interface CreateProductInput {
   name: string
   description?: string | null
+  defaultSalePrice: number
+  isActive: boolean
   parts: ProductPartInput[]
 }
 

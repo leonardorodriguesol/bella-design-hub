@@ -47,6 +47,8 @@ public class ProductsController(ApplicationDbContext context) : ControllerBase
         {
             Name = request.Name,
             Description = request.Description,
+            DefaultSalePrice = request.DefaultSalePrice,
+            IsActive = request.IsActive,
             CreatedAt = DateTime.UtcNow,
             Parts = request.Parts
                 .Select(part => new ProductPart
@@ -78,6 +80,8 @@ public class ProductsController(ApplicationDbContext context) : ControllerBase
 
         product.Name = request.Name;
         product.Description = request.Description;
+        product.DefaultSalePrice = request.DefaultSalePrice;
+        product.IsActive = request.IsActive;
         product.UpdatedAt = DateTime.UtcNow;
 
         _context.ProductParts.RemoveRange(product.Parts);

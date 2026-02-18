@@ -41,14 +41,14 @@ VALUES
   ('16161616-1616-1616-1616-161616161616', 'Yasmin Almeida', 'yasmin.almeida@atelier.com', '+55 69 98228-2008', 'Rua José Bonifácio, 1200 - Olaria - Porto Velho/RO', NOW() - INTERVAL '3 months');
 
 -- Produtos (foco realista: penteadeiras e espelhos)
-INSERT INTO products ("Id", "Name", "Description", "CreatedAt", "UpdatedAt")
+INSERT INTO products ("Id", "Name", "Description", "DefaultSalePrice", "IsActive", "CreatedAt", "UpdatedAt")
 VALUES
-  ('90000000-0000-0000-0000-000000000101', 'Penteadeira Camarim Slim 90 cm', 'Penteadeira compacta com gaveteiro e moldura com iluminação LED.', NOW() - INTERVAL '8 months', NULL),
-  ('90000000-0000-0000-0000-000000000102', 'Penteadeira Camarim Clássica 120 cm', 'Modelo intermediário com tampo amplo e espelho iluminado.', NOW() - INTERVAL '8 months', NULL),
-  ('90000000-0000-0000-0000-000000000103', 'Penteadeira Camarim Premium 140 cm', 'Versão premium com torre lateral e acabamento reforçado.', NOW() - INTERVAL '8 months', NULL),
-  ('90000000-0000-0000-0000-000000000104', 'Espelho Camarim Retangular 70 x 100 cm', 'Espelho lapidado com moldura em MDF e fita LED embutida.', NOW() - INTERVAL '8 months', NULL),
-  ('90000000-0000-0000-0000-000000000105', 'Espelho Camarim Redondo 80 cm', 'Espelho redondo com iluminação perimetral e acabamento em laca.', NOW() - INTERVAL '8 months', NULL),
-  ('90000000-0000-0000-0000-000000000106', 'Espelho Corpo Inteiro Camarim 60 x 180 cm', 'Espelho vertical com estrutura reforçada para quarto e closet.', NOW() - INTERVAL '8 months', NULL);
+  ('90000000-0000-0000-0000-000000000101', 'Penteadeira Camarim Slim 90 cm', 'Penteadeira compacta com gaveteiro e moldura com iluminação LED.', 1470.00, TRUE, NOW() - INTERVAL '8 months', NULL),
+  ('90000000-0000-0000-0000-000000000102', 'Penteadeira Camarim Clássica 120 cm', 'Modelo intermediário com tampo amplo e espelho iluminado.', 1690.00, TRUE, NOW() - INTERVAL '8 months', NULL),
+  ('90000000-0000-0000-0000-000000000103', 'Penteadeira Camarim Premium 140 cm', 'Versão premium com torre lateral e acabamento reforçado.', 1910.00, TRUE, NOW() - INTERVAL '8 months', NULL),
+  ('90000000-0000-0000-0000-000000000104', 'Espelho Camarim Retangular 70 x 100 cm', 'Espelho lapidado com moldura em MDF e fita LED embutida.', 1010.00, TRUE, NOW() - INTERVAL '8 months', NULL),
+  ('90000000-0000-0000-0000-000000000105', 'Espelho Camarim Redondo 80 cm', 'Espelho redondo com iluminação perimetral e acabamento em laca.', 1165.00, TRUE, NOW() - INTERVAL '8 months', NULL),
+  ('90000000-0000-0000-0000-000000000106', 'Espelho Corpo Inteiro Camarim 60 x 180 cm', 'Espelho vertical com estrutura reforçada para quarto e closet.', 1420.00, TRUE, NOW() - INTERVAL '8 months', NULL);
 
 INSERT INTO product_parts ("Id", "ProductId", "Name", "Measurements", "Quantity")
 VALUES

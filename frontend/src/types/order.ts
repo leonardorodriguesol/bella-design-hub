@@ -2,6 +2,7 @@ export type OrderStatus = 'Pending' | 'InProduction' | 'Shipped' | 'Delivered' |
 
 export interface OrderItem {
   id?: string
+  productId?: string | null
   description: string
   quantity: number
   unitPrice: number
@@ -28,6 +29,7 @@ export interface CreateOrderInput {
   code?: string | null
   deliveryDate?: string | null
   items: Array<{
+    productId?: string | null
     description: string
     quantity: number
     unitPrice: number

@@ -56,6 +56,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         {
             builder.ToTable("order_items");
             builder.HasKey(oi => oi.Id);
+            builder.Property(oi => oi.ProductId);
             builder.Property(oi => oi.Description)
                    .IsRequired()
                    .HasMaxLength(250);
@@ -67,6 +68,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                    .WithMany(o => o.Items)
                    .HasForeignKey(oi => oi.OrderId)
                    .OnDelete(DeleteBehavior.Cascade);
+            builder.HasOne(oi => oi.Product)
+                   .WithMany()
+                   .HasForeignKey(oi => oi.ProductId)
+                   .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<Expense>(builder =>
@@ -94,6 +99,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                    .HasMaxLength(200);
             builder.Property(p => p.Description)
                    .HasMaxLength(500);
+            builder.Property(p => p.DefaultSalePrice)
+                   .HasColumnType("numeric(14,2)");
+            builder.Property(p => p.IsActive)
+                   .HasDefaultValue(true)
+                   .IsRequired();
             builder.Property(p => p.CreatedAt)
                    .IsRequired();
         });

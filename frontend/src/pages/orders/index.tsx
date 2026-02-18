@@ -6,6 +6,7 @@ import { IconActionButton } from '../../components/ui/IconActionButton'
 import { useOrders } from '../../hooks/useOrders'
 import { useCustomers } from '../../hooks/useCustomers'
 import { useOrderMutations } from '../../hooks/useOrderMutations'
+import { useProducts } from '../../hooks/useProducts'
 import type { Order, OrderStatus, UpdateOrderInput } from '../../types/order'
 
 type OrderFilterStatus = OrderStatus | 'Overdue'
@@ -25,6 +26,7 @@ const orderFilterStatusOptions: { label: string; value: OrderFilterStatus }[] = 
 
 export const Orders = () => {
   const { data: customers } = useCustomers()
+  const { data: products } = useProducts()
   const [filters, setFilters] = useState<{ customerId?: string; status?: OrderFilterStatus }>({})
   const [customerSearch, setCustomerSearch] = useState('')
   const [isCustomerFilterOpen, setIsCustomerFilterOpen] = useState(false)
@@ -145,6 +147,17 @@ export const Orders = () => {
 
   const showEmptyState = !isLoading && !error && displayedOrders.length === 0
   const totalOrders = data?.length ?? 0
+  const activeProducts = useMemo(
+    () =>
+      (products ?? [])
+        .filter((product) => product.isActive)
+        .map((product) => ({
+          id: product.id,
+          name: product.name,
+          defaultSalePrice: product.defaultSalePrice,
+        })),
+    [products],
+  )
 
   const handleCreate = async (values: OrderFormValues) => {
     setCreateError(null)
@@ -152,7 +165,12 @@ export const Orders = () => {
       await create.mutateAsync({
         customerId: values.customerId,
         deliveryDate: normalizeDate(values.deliveryDate?.trim()),
-        items: values.items,
+        items: values.items.map((item) => ({
+          productId: item.productId?.trim() ? item.productId : undefined,
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        })),
       })
       showMessage('Pedido criado com sucesso!')
       setIsCreateOpen(false)
@@ -171,7 +189,12 @@ export const Orders = () => {
         customerId: values.customerId,
         deliveryDate: normalizeDate(values.deliveryDate?.trim()),
         status: (values.status as OrderStatus) ?? 'Pending',
-        items: values.items,
+        items: values.items.map((item) => ({
+          productId: item.productId?.trim() ? item.productId : undefined,
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        })),
       }
 
       await update.mutateAsync({ id: editingOrder.id, payload })
@@ -449,7 +472,7 @@ export const Orders = () => {
               </div>
             )}
 
-            <OrderForm customers={customers} onSubmit={handleCreate} isSubmitting={create.isPending} />
+            <OrderForm customers={customers} products={activeProducts} onSubmit={handleCreate} isSubmitting={create.isPending} />
           </div>
         </div>
       )}
@@ -484,11 +507,13 @@ export const Orders = () => {
                 deliveryDate: formatDateForInput(editingOrder.deliveryDate),
                 status: editingOrder.status,
                 items: editingOrder.items.map((item) => ({
+                  productId: item.productId ?? '',
                   description: item.description,
                   quantity: item.quantity,
                   unitPrice: item.unitPrice,
                 })),
               }}
+              products={activeProducts}
               onSubmit={handleUpdate}
               isSubmitting={update.isPending}
               showStatusField

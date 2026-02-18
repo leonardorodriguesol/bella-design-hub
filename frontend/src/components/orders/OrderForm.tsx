@@ -10,6 +10,7 @@ const orderSchema = z.object({
   items: z
     .array(
       z.object({
+        productId: z.string().optional(),
         description: z.string().min(2, 'Descrição obrigatória'),
         quantity: z.number().min(1, 'Quantidade mínima 1'),
         unitPrice: z.number().min(0.01, 'Valor mínimo R$ 0,01'),
@@ -22,16 +23,18 @@ export type OrderFormValues = z.infer<typeof orderSchema>
 
 interface OrderFormProps {
   customers: { id: string; name: string }[]
+  products?: { id: string; name: string; defaultSalePrice: number }[]
   defaultValues?: OrderFormValues
   onSubmit: (values: OrderFormValues) => Promise<void> | void
   isSubmitting?: boolean
   showStatusField?: boolean
 }
 
-const defaultItem = { description: '', quantity: 1, unitPrice: 0 }
+const defaultItem = { productId: '', description: '', quantity: 1, unitPrice: 0 }
 
 export const OrderForm = ({
   customers,
+  products,
   defaultValues,
   onSubmit,
   isSubmitting,
@@ -41,6 +44,7 @@ export const OrderForm = ({
     register,
     handleSubmit,
     reset,
+    setValue,
     control,
     formState: { errors },
   } = useForm<OrderFormValues>({
@@ -61,8 +65,23 @@ export const OrderForm = ({
     }
   }, [defaultValues, reset])
 
+  const handleSelectProduct = (index: number, productId: string) => {
+    if (!productId) return
+    const selectedProduct = products?.find((product) => product.id === productId)
+    if (!selectedProduct) return
+
+    setValue(`items.${index}.description`, selectedProduct.name, { shouldDirty: true, shouldValidate: true })
+    setValue(`items.${index}.unitPrice`, selectedProduct.defaultSalePrice, { shouldDirty: true, shouldValidate: true })
+  }
+
   const handleFormSubmit = async (values: OrderFormValues) => {
-    await onSubmit(values)
+    await onSubmit({
+      ...values,
+      items: values.items.map((item) => ({
+        ...item,
+        productId: item.productId?.trim() ? item.productId : undefined,
+      })),
+    })
 
     if (!defaultValues) {
       reset({
@@ -136,7 +155,26 @@ export const OrderForm = ({
         </div>
 
         {fields.map((field, index) => (
-          <div key={field.id} className="grid gap-3 rounded-2xl border border-brand-100 p-4 md:grid-cols-4">
+          <div key={field.id} className="grid gap-3 rounded-2xl border border-brand-100 p-4 md:grid-cols-5">
+            <label className="text-xs text-brand-500">
+              <span className="mb-1 block font-semibold text-brand-700">Produto</span>
+              <select
+                className="w-full rounded-xl border border-brand-100 px-3 py-2 text-sm text-brand-700 focus:border-brand-500 focus:outline-none"
+                {...register(`items.${index}.productId` as const)}
+                onChange={(event) => {
+                  setValue(`items.${index}.productId`, event.target.value, { shouldDirty: true })
+                  handleSelectProduct(index, event.target.value)
+                }}
+              >
+                <option value="">Item avulso</option>
+                {products?.map((product) => (
+                  <option key={product.id} value={product.id}>
+                    {product.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
             <label className="text-xs text-brand-500 md:col-span-2">
               <span className="mb-1 block font-semibold text-brand-700">Descrição</span>
               <input
@@ -179,7 +217,7 @@ export const OrderForm = ({
             {fields.length > 1 && (
               <button
                 type="button"
-                className="mt-5 inline-flex items-center justify-center rounded-xl border border-brand-100 px-3 py-2 text-brand-500 hover:bg-brand-50"
+                className="mt-5 inline-flex items-center justify-center rounded-xl border border-brand-100 px-3 py-2 text-brand-500 transition hover:bg-brand-50"
                 onClick={() => remove(index)}
               >
                 Remover

@@ -77,8 +77,15 @@ public class OrdersController(ApplicationDbContext context) : ControllerBase
             return BadRequest("Cliente não encontrado.");
         }
 
+        var hasInvalidProducts = await HasInvalidProducts(request.Items, cancellationToken);
+        if (hasInvalidProducts)
+        {
+            return BadRequest("Um ou mais produtos informados não foram encontrados.");
+        }
+
         var items = request.Items.Select(item => new OrderItem
         {
+            ProductId = item.ProductId,
             Description = item.Description,
             Quantity = item.Quantity,
             UnitPrice = item.UnitPrice
@@ -116,11 +123,18 @@ public class OrdersController(ApplicationDbContext context) : ControllerBase
         order.DeliveryDate = request.DeliveryDate;
         order.UpdatedAt = DateTime.UtcNow;
 
+        var hasInvalidProducts = await HasInvalidProducts(request.Items, cancellationToken);
+        if (hasInvalidProducts)
+        {
+            return BadRequest("Um ou mais produtos informados não foram encontrados.");
+        }
+
         _context.OrderItems.RemoveRange(order.Items);
 
         var updatedItems = request.Items.Select(item => new OrderItem
         {
             OrderId = order.Id,
+            ProductId = item.ProductId,
             Description = item.Description,
             Quantity = item.Quantity,
             UnitPrice = item.UnitPrice
@@ -149,6 +163,28 @@ public class OrdersController(ApplicationDbContext context) : ControllerBase
         await _context.SaveChangesAsync(cancellationToken);
 
         return NoContent();
+    }
+
+    private async Task<bool> HasInvalidProducts(IEnumerable<OrderItemRequest> items, CancellationToken cancellationToken)
+    {
+        var productIds = items
+            .Where(item => item.ProductId.HasValue)
+            .Select(item => item.ProductId!.Value)
+            .Distinct()
+            .ToList();
+
+        if (productIds.Count == 0)
+        {
+            return false;
+        }
+
+        var existingIds = await _context.Products
+            .AsNoTracking()
+            .Where(product => productIds.Contains(product.Id))
+            .Select(product => product.Id)
+            .ToListAsync(cancellationToken);
+
+        return existingIds.Count != productIds.Count;
     }
 
     private static string GenerateOrderCode() => $"PED-{DateTime.UtcNow:yyyyMMddHHmmss}";

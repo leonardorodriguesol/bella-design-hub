@@ -13,6 +13,8 @@ const partSchema = z.object({
 const productSchema = z.object({
   name: z.string().min(2, 'Nome é obrigatório'),
   description: z.string().optional(),
+  defaultSalePrice: z.number().min(0.01, 'Valor mínimo R$ 0,01'),
+  isActive: z.boolean(),
   parts: z.array(partSchema).min(1, 'Inclua pelo menos uma peça'),
 })
 
@@ -27,6 +29,8 @@ interface ProductFormProps {
 const mapToFormValues = (values?: CreateProductInput): ProductFormValues => ({
   name: values?.name ?? '',
   description: values?.description ?? '',
+  defaultSalePrice: values?.defaultSalePrice ?? 0,
+  isActive: values?.isActive ?? true,
   parts: values?.parts?.length
     ? values.parts.map((part) => ({
         name: part.name,
@@ -57,6 +61,8 @@ export const ProductForm = ({ defaultValues, onSubmit, isSubmitting }: ProductFo
     const payload: CreateProductInput = {
       name: values.name.trim(),
       description: values.description?.trim() ? values.description.trim() : undefined,
+      defaultSalePrice: values.defaultSalePrice,
+      isActive: values.isActive,
       parts: values.parts.map((part) => ({
         name: part.name.trim(),
         quantity: part.quantity,
@@ -93,6 +99,30 @@ export const ProductForm = ({ defaultValues, onSubmit, isSubmitting }: ProductFo
           />
           {errors.description && <p className="text-xs text-red-600">{errors.description.message}</p>}
         </label>
+
+        <div className="grid gap-4 md:grid-cols-[200px_1fr]">
+          <label className="text-sm text-brand-600">
+            <span className="mb-1 block font-semibold text-brand-700">Preço padrão*</span>
+            <input
+              type="number"
+              step="0.01"
+              min={0}
+              className="w-full rounded-2xl border border-brand-100 px-4 py-2 text-sm text-brand-700 placeholder:text-brand-300 focus:border-brand-500 focus:outline-none"
+              placeholder="0,00"
+              {...register('defaultSalePrice', { valueAsNumber: true })}
+            />
+            {errors.defaultSalePrice && <p className="text-xs text-red-600">{errors.defaultSalePrice.message}</p>}
+          </label>
+
+          <label className="flex items-center gap-2 rounded-2xl border border-brand-100 bg-brand-50/40 px-4 py-2 text-sm font-semibold text-brand-700">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-brand-300 text-brand-500 focus:ring-brand-400"
+              {...register('isActive')}
+            />
+            Produto ativo para novos pedidos
+          </label>
+        </div>
       </div>
 
       <div className="space-y-3">
