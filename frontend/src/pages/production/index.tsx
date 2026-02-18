@@ -2,6 +2,7 @@ import { isAxiosError } from 'axios'
 import { useEffect, useMemo, useState } from 'react'
 
 import { ProductForm } from '../../components/production/ProductForm'
+import { IconActionButton } from '../../components/ui/IconActionButton'
 import { useProductMutations } from '../../hooks/useProductMutations'
 import { useProducts } from '../../hooks/useProducts'
 import { useProductionScheduleMutations } from '../../hooks/useProductionScheduleMutations'
@@ -403,15 +404,28 @@ export const Production = () => {
                         >
                           {expanded ? 'Ocultar peças' : 'Ver peças'}
                         </button>
-                        <button
-                          type="button"
-                          className="rounded-full border border-transparent p-1.5 text-brand-500 transition hover:border-brand-100 hover:bg-brand-50"
-                          title="Remover do plano"
+                        <IconActionButton
+                          label="Remover do plano"
+                          variant="danger"
                           onClick={() => handleDeleteSchedule(schedule)}
                           disabled={removeSchedule.isPending}
                         >
-                          🗑️
-                        </button>
+                          <svg
+                            viewBox="0 0 24 24"
+                            className="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M3 6h18" />
+                            <path d="M8 6V4h8v2" />
+                            <path d="M19 6l-1 14H6L5 6" />
+                            <path d="M10 11v6" />
+                            <path d="M14 11v6" />
+                          </svg>
+                        </IconActionButton>
                       </div>
                     </div>
 
@@ -534,25 +548,42 @@ export const Production = () => {
                             >
                               {expanded ? 'Ocultar peças' : 'Ver peças'}
                             </button>
-                            <button
-                              type="button"
-                              className="rounded-full border border-brand-200 px-2 py-1 text-xs font-semibold text-brand-600 transition hover:bg-brand-50"
-                              onClick={() => handleEditProduct(product)}
-                              aria-label={`Editar ${product.name}`}
-                              title="Editar produto"
-                            >
-                              ✎
-                            </button>
-                            <button
-                              type="button"
-                              className="rounded-full border border-red-200 px-2 py-1 text-xs font-semibold text-red-500 transition hover:bg-red-50"
+                            <IconActionButton label="Editar produto" onClick={() => handleEditProduct(product)}>
+                              <svg
+                                viewBox="0 0 24 24"
+                                className="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.8"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M3 21h4l11-11a2.121 2.121 0 0 0-3-3L4 18v3z" />
+                                <path d="m14.5 5.5 3 3" />
+                              </svg>
+                            </IconActionButton>
+                            <IconActionButton
+                              label="Remover produto"
+                              variant="danger"
                               onClick={() => handleDeleteProduct(product)}
                               disabled={removeProduct.isPending}
-                              aria-label={`Remover ${product.name}`}
-                              title="Remover produto"
                             >
-                              🗑
-                            </button>
+                              <svg
+                                viewBox="0 0 24 24"
+                                className="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.8"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4h8v2" />
+                                <path d="M19 6l-1 14H6L5 6" />
+                                <path d="M10 11v6" />
+                                <path d="M14 11v6" />
+                              </svg>
+                            </IconActionButton>
                           </div>
                         </div>
 

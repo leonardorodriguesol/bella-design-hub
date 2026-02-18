@@ -32,15 +32,16 @@ export const Finance = () => {
     return { start, end }
   }, [selectedMonth])
 
-  const filteredOrders = useMemo(() => {
+  const deliveredOrders = useMemo(() => {
     if (!orders) return []
     return orders.filter((order) => {
       if (order.status !== 'Delivered') return false
-      const createdAt = new Date(order.createdAt)
-      if (createdAt < period.start) return false
+      const accountingDate = new Date(order.deliveryDate ?? order.createdAt)
+      if (Number.isNaN(accountingDate.getTime())) return false
+      if (accountingDate < period.start) return false
       const endOfDay = new Date(period.end)
       endOfDay.setHours(23, 59, 59, 999)
-      if (createdAt > endOfDay) return false
+      if (accountingDate > endOfDay) return false
       return true
     })
   }, [orders, period])
@@ -58,12 +59,12 @@ export const Finance = () => {
   }, [expenses, period])
 
   const summary = useMemo(() => {
-    const totalOrders = filteredOrders.length
-    const totalRevenue = filteredOrders.reduce((sum, order) => sum + order.totalAmount, 0)
+    const totalOrders = deliveredOrders.length
+    const totalRevenue = deliveredOrders.reduce((sum, order) => sum + order.totalAmount, 0)
     const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0)
 
     return { totalOrders, totalRevenue, totalExpenses }
-  }, [filteredOrders, filteredExpenses])
+  }, [deliveredOrders, filteredExpenses])
 
   const loading = ordersLoading || expensesLoading
 
@@ -84,7 +85,7 @@ export const Finance = () => {
             <p className="mt-3 text-3xl font-semibold text-brand-800">
               {loading ? '—' : summary.totalOrders.toLocaleString('pt-BR')}
             </p>
-            <p className="mt-1 text-sm text-brand-500">Total de pedidos registrados</p>
+            <p className="mt-1 text-sm text-brand-500">Pedidos entregues no período</p>
           </div>
 
           <div className="rounded-2xl border border-brand-100 bg-white p-6 shadow-sm">
@@ -94,7 +95,7 @@ export const Finance = () => {
                 ? '—'
                 : summary.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
             </p>
-            <p className="mt-1 text-sm text-brand-500">Soma dos pedidos</p>
+            <p className="mt-1 text-sm text-brand-500">Soma dos pedidos entregues (faturamento)</p>
           </div>
 
           <div className="rounded-2xl border border-brand-100 bg-white p-6 shadow-sm">
@@ -141,7 +142,7 @@ export const Finance = () => {
             Dica: escolha um mês para visualizar rapidamente a saúde financeira desse período.
           </p>
 
-          {!loading && filteredOrders.length === 0 && filteredExpenses.length === 0 && (
+          {!loading && deliveredOrders.length === 0 && filteredExpenses.length === 0 && (
             <div className="rounded-2xl border border-brand-100 bg-brand-50/60 px-4 py-3 text-sm text-brand-600">
               Não há dados para este período.
             </div>

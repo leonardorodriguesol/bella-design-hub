@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 
 import { CustomerForm } from '../../components/customers/CustomerForm'
+import { IconActionButton } from '../../components/ui/IconActionButton'
 import { useCustomerMutations } from '../../hooks/useCustomerMutations'
 import { useCustomers } from '../../hooks/useCustomers'
 import type { Customer } from '../../types/customer'
@@ -155,27 +156,37 @@ export const Customers = () => {
                   <td className="px-6 py-4 text-brand-600">{customer.address ?? '—'}</td>
                   <td className="px-6 py-4 text-right text-sm">
                     <div className="flex justify-end gap-2">
-                      <button
-                        type="button"
-                        className="rounded-full border border-transparent p-1.5 text-brand-500 transition hover:border-brand-100 hover:bg-brand-50 hover:text-brand-700"
-                        aria-label={`Editar ${customer.name}`}
-                        title="Editar"
-                        onClick={() => setEditingCustomer(customer)}
-                      >
-                        <span aria-hidden>✏️</span>
-                        <span className="sr-only">Editar</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="rounded-full border border-transparent p-1.5 text-brand-500 transition hover:border-brand-100 hover:bg-brand-50 hover:text-brand-700"
-                        aria-label={`Excluir ${customer.name}`}
-                        title="Excluir"
-                        onClick={() => handleDelete(customer)}
-                        disabled={remove.isPending}
-                      >
-                        <span aria-hidden>🗑️</span>
-                        <span className="sr-only">Excluir</span>
-                      </button>
+                      <IconActionButton label="Editar" onClick={() => setEditingCustomer(customer)}>
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M3 21h4l11-11a2.121 2.121 0 0 0-3-3L4 18v3z" />
+                          <path d="m14.5 5.5 3 3" />
+                        </svg>
+                      </IconActionButton>
+                      <IconActionButton label="Excluir" variant="danger" onClick={() => handleDelete(customer)} disabled={remove.isPending}>
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M3 6h18" />
+                          <path d="M8 6V4h8v2" />
+                          <path d="M19 6l-1 14H6L5 6" />
+                          <path d="M10 11v6" />
+                          <path d="M14 11v6" />
+                        </svg>
+                      </IconActionButton>
                     </div>
                   </td>
                 </tr>

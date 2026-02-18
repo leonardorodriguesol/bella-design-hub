@@ -2,6 +2,7 @@ import { isAxiosError } from 'axios'
 import { Fragment, useEffect, useMemo, useState } from 'react'
 
 import { ServiceOrderForm, type ServiceOrderFormValues } from '../../components/serviceOrders/ServiceOrderForm'
+import { IconActionButton } from '../../components/ui/IconActionButton'
 import { useCustomers } from '../../hooks/useCustomers'
 import { useOrders } from '../../hooks/useOrders'
 import { useServiceOrderMutations } from '../../hooks/useServiceOrderMutations'
@@ -320,15 +321,16 @@ export const ServiceOrders = () => {
           <h2 className="text-2xl font-bold text-brand-700">Entregas e instalações planejadas</h2>
           <p className="text-sm text-brand-500">Painel com ordens de serviço por status e informações de planejamento diário da equipe.</p>
           <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-2xl bg-brand-500 px-5 py-2 text-sm font-bold text-white shadow hover:bg-brand-400"
+            <IconActionButton
+              label="Gerar ordem de serviço"
+              variant="primary"
               onClick={openCreateModal}
               disabled={!ordersForForm.length}
             >
-              <span aria-hidden>＋</span>
-              Gerar ordem
-            </button>
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+            </IconActionButton>
           </div>
           {!ordersForForm.length && <p className="text-xs text-brand-400">Cadastre pedidos para gerar ordens de serviço.</p>}
         </header>
@@ -391,35 +393,72 @@ export const ServiceOrders = () => {
                       <td className="px-6 py-4 text-brand-600">{serviceOrder.responsible ?? 'Não informado'}</td>
                       <td className="px-6 py-4 text-right text-sm">
                         <div className="flex justify-end gap-2 flex-wrap">
-                          <button
-                            type="button"
-                            className="rounded-full border border-brand-100 px-3 py-1 text-sm font-semibold text-brand-500 hover:bg-brand-50"
-                            onClick={() => setSelectedOrder(serviceOrder)}
-                          >
-                            Ver detalhes
-                          </button>
-                          <button
-                            type="button"
-                            className="rounded-full border border-brand-100 px-3 py-1 text-sm font-semibold text-brand-500 hover:bg-brand-50"
-                            onClick={() => openEditModal(serviceOrder)}
-                          >
-                            Editar
-                          </button>
-                          <button
-                            type="button"
-                            className="rounded-full border border-brand-100 px-3 py-1 text-sm font-semibold text-brand-500 hover:bg-brand-50"
-                            onClick={() => handlePrint(serviceOrder)}
-                          >
-                            Imprimir
-                          </button>
-                          <button
-                            type="button"
-                            className="rounded-full border border-red-200 px-3 py-1 text-sm font-semibold text-red-500 hover:bg-red-50 disabled:opacity-60"
+                          <IconActionButton label="Ver detalhes" onClick={() => setSelectedOrder(serviceOrder)}>
+                            <svg
+                              viewBox="0 0 24 24"
+                              className="h-4 w-4"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.8"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" />
+                              <circle cx="12" cy="12" r="3" />
+                            </svg>
+                          </IconActionButton>
+                          <IconActionButton label="Editar" onClick={() => openEditModal(serviceOrder)}>
+                            <svg
+                              viewBox="0 0 24 24"
+                              className="h-4 w-4"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.8"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M3 21h4l11-11a2.121 2.121 0 0 0-3-3L4 18v3z" />
+                              <path d="m14.5 5.5 3 3" />
+                            </svg>
+                          </IconActionButton>
+                          <IconActionButton label="Imprimir" onClick={() => handlePrint(serviceOrder)}>
+                            <svg
+                              viewBox="0 0 24 24"
+                              className="h-4 w-4"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.8"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M7 8V4h10v4" />
+                              <rect x="5" y="8" width="14" height="8" rx="2" />
+                              <path d="M7 14h10v6H7z" />
+                              <circle cx="17" cy="11" r="0.6" fill="currentColor" />
+                            </svg>
+                          </IconActionButton>
+                          <IconActionButton
+                            label="Excluir"
+                            variant="danger"
                             onClick={() => handleDelete(serviceOrder)}
                             disabled={removeServiceOrder.isPending}
                           >
-                            Excluir
-                          </button>
+                            <svg
+                              viewBox="0 0 24 24"
+                              className="h-4 w-4"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.8"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M3 6h18" />
+                              <path d="M8 6V4h8v2" />
+                              <path d="M19 6l-1 14H6L5 6" />
+                              <path d="M10 11v6" />
+                              <path d="M14 11v6" />
+                            </svg>
+                          </IconActionButton>
                         </div>
                       </td>
                     </tr>
@@ -476,35 +515,71 @@ export const ServiceOrders = () => {
                 <p className="text-sm text-brand-500">{customerMap[selectedOrder.customerId] ?? '—'}</p>
               </div>
               <div className="flex gap-2">
-                <button
-                  type="button"
-                  className="rounded-full border border-brand-100 px-4 py-1 text-sm font-semibold text-brand-500 hover:bg-brand-50"
-                  onClick={() => openEditModal(selectedOrder)}
-                >
-                  Editar
-                </button>
-                <button
-                  type="button"
-                  className="rounded-full border border-brand-100 px-4 py-1 text-sm font-semibold text-brand-500 hover:bg-brand-50"
-                  onClick={() => handlePrint(selectedOrder)}
-                >
-                  Imprimir 2 vias
-                </button>
-                <button
-                  type="button"
-                  className="rounded-full border border-red-200 px-4 py-1 text-sm font-semibold text-red-500 hover:bg-red-50 disabled:opacity-60"
+                <IconActionButton label="Editar" onClick={() => openEditModal(selectedOrder)}>
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M3 21h4l11-11a2.121 2.121 0 0 0-3-3L4 18v3z" />
+                    <path d="m14.5 5.5 3 3" />
+                  </svg>
+                </IconActionButton>
+                <IconActionButton label="Imprimir 2 vias" onClick={() => handlePrint(selectedOrder)}>
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M7 8V4h10v4" />
+                    <rect x="5" y="8" width="14" height="8" rx="2" />
+                    <path d="M7 14h10v6H7z" />
+                    <circle cx="17" cy="11" r="0.6" fill="currentColor" />
+                  </svg>
+                </IconActionButton>
+                <IconActionButton
+                  label="Excluir"
+                  variant="danger"
                   onClick={() => handleDelete(selectedOrder)}
                   disabled={removeServiceOrder.isPending}
                 >
-                  Excluir
-                </button>
-                <button
-                  type="button"
-                  className="rounded-full border border-brand-100 px-4 py-1 text-sm font-semibold text-brand-500 hover:bg-brand-50"
-                  onClick={() => setSelectedOrder(null)}
-                >
-                  Fechar
-                </button>
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M3 6h18" />
+                    <path d="M8 6V4h8v2" />
+                    <path d="M19 6l-1 14H6L5 6" />
+                    <path d="M10 11v6" />
+                    <path d="M14 11v6" />
+                  </svg>
+                </IconActionButton>
+                <IconActionButton label="Fechar painel" onClick={() => setSelectedOrder(null)}>
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="m6 6 12 12M18 6 6 18" />
+                  </svg>
+                </IconActionButton>
               </div>
             </div>
 
