@@ -1,5 +1,5 @@
 import { isAxiosError } from 'axios'
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 
 import { ServiceOrderForm, type ServiceOrderFormValues } from '../../components/serviceOrders/ServiceOrderForm'
 import { useCustomers } from '../../hooks/useCustomers'
@@ -15,6 +15,10 @@ type PrintableItem = {
   description: string
   quantity: number
   unitPrice: number
+}
+
+type PrintableLineItem = PrintableItem & {
+  kind: 'Produto' | 'Serviço'
 }
 
 const getApiErrorMessage = (err: unknown, fallback: string) => {
@@ -157,6 +161,13 @@ export const ServiceOrders = () => {
 
   const printableProductItems = useMemo(() => getPrintableProductItems(orderForPrint, orderMap), [orderForPrint, orderMap])
   const printableAdditionalItems = useMemo(() => getPrintableAdditionalItems(orderForPrint), [orderForPrint])
+  const printableLineItems = useMemo<PrintableLineItem[]>(
+    () => [
+      ...printableProductItems.map((item) => ({ ...item, kind: 'Produto' as const })),
+      ...printableAdditionalItems.map((item) => ({ ...item, kind: 'Serviço' as const })),
+    ],
+    [printableProductItems, printableAdditionalItems],
+  )
   const productsTotal = useMemo(
     () => printableProductItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
     [printableProductItems],
@@ -306,8 +317,8 @@ export const ServiceOrders = () => {
       <section className="space-y-6 screen-only">
         <header className="space-y-2 text-brand-700">
           <p className="text-sm uppercase tracking-[0.3em] text-brand-400">Ordens de serviço</p>
-          <h2 className="text-2xl font-bold text-brand-700">Acompanhe entregas e instalações planejadas</h2>
-          <p className="text-sm text-brand-500">Visualize todas as ordens de serviço por status e planeje o dia da equipe.</p>
+          <h2 className="text-2xl font-bold text-brand-700">Entregas e instalações planejadas</h2>
+          <p className="text-sm text-brand-500">Painel com ordens de serviço por status e informações de planejamento diário da equipe.</p>
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
@@ -508,10 +519,10 @@ export const ServiceOrders = () => {
               </div>
             </div>
 
-            {selectedOrder.notes && (
+            {normalizeText(selectedOrder.notes) && (
               <div className="rounded-2xl border border-brand-100 bg-white p-4 text-sm text-brand-600 shadow-sm">
                 <p className="text-sm font-semibold text-brand-700">Observações</p>
-                <p className="mt-2 whitespace-pre-line">{selectedOrder.notes}</p>
+                <p className="mt-2 whitespace-pre-line">{normalizeText(selectedOrder.notes)}</p>
               </div>
             )}
 
@@ -573,8 +584,8 @@ export const ServiceOrders = () => {
             }
             .print-wrapper {
               display: grid;
-              grid-template-rows: repeat(2, 1fr);
-              gap: 8px;
+              grid-template-rows: 1fr auto 1fr;
+              gap: 6px;
               height: 100%;
             }
             .print-copy {
@@ -615,57 +626,111 @@ export const ServiceOrders = () => {
               display: block;
               font-size: 0.82rem;
             }
-            .print-info-grid {
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 6px;
-            }
-            .print-info {
-              width: 100%;
-              border-collapse: collapse;
-              font-size: 0.67rem;
-            }
-            .print-info td {
+            .print-client-section {
               border: 1px solid #000;
-              padding: 2px 4px;
-            }
-            .print-info td:first-child {
-              width: 72px;
-              font-weight: 600;
-              background: #f7f7f7;
-            }
-            .print-sections-grid {
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 6px;
-            }
-            .print-section {
-              border: 1px solid #000;
-              padding: 4px;
-              font-size: 0.67rem;
-            }
-            .print-section h4 {
-              margin: 0;
-              font-size: 0.66rem;
-              text-transform: uppercase;
-              margin-bottom: 2px;
-            }
-            .print-items {
-              width: 100%;
-              border-collapse: collapse;
-              margin-top: 2px;
+              padding: 5px 6px;
               font-size: 0.65rem;
             }
-            .print-items th,
-            .print-items td {
+            .print-client-title {
+              margin: 0 0 4px;
+              font-size: 0.62rem;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+            }
+            .print-client-grid {
+              display: grid;
+              grid-template-columns: repeat(3, minmax(0, 1fr));
+              gap: 4px 8px;
+            }
+            .print-client-item {
+              min-width: 0;
+              display: flex;
+              flex-direction: column;
+              gap: 1px;
+            }
+            .print-client-item-full {
+              grid-column: 1 / -1;
+            }
+            .print-client-label {
+              font-size: 0.54rem;
+              text-transform: uppercase;
+              letter-spacing: 0.04em;
+              opacity: 0.8;
+            }
+            .print-client-value {
+              font-size: 0.66rem;
+              font-weight: 600;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+            .print-client-item-full .print-client-value {
+              white-space: normal;
+              overflow: visible;
+              text-overflow: clip;
+            }
+            .print-list-section {
               border: 1px solid #000;
-              padding: 2px 3px;
-              text-align: left;
+              padding: 5px 6px;
+              font-size: 0.67rem;
+            }
+            .print-list-title {
+              margin: 0;
+              font-size: 0.62rem;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+              margin-bottom: 4px;
+            }
+            .print-list-body {
+              display: flex;
+              flex-direction: column;
+              gap: 2px;
+            }
+            .print-list-row {
+              display: grid;
+              grid-template-columns: 1fr auto;
+              gap: 8px;
+              align-items: center;
+              padding: 2px 0;
+              border-bottom: 1px dotted #d1d1d1;
               line-height: 1.2;
             }
-            .print-items tfoot td {
+            .print-list-row:last-child {
+              border-bottom: 0;
+            }
+            .print-list-desc {
+              min-width: 0;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+            .print-list-kind {
+              text-transform: uppercase;
+              font-size: 0.54rem;
+              letter-spacing: 0.04em;
+              margin-right: 4px;
+              opacity: 0.8;
+            }
+            .print-list-values {
+              display: grid;
+              grid-template-columns: 28px 56px 64px;
+              gap: 6px;
+              justify-items: end;
+              text-align: right;
+              font-size: 0.64rem;
+              white-space: nowrap;
+            }
+            .print-list-empty {
+              font-size: 0.63rem;
+              opacity: 0.8;
+            }
+            .print-list-total {
+              margin-top: 4px;
+              padding-top: 3px;
+              border-top: 1px solid #000;
               font-weight: 700;
               text-align: right;
+              font-size: 0.66rem;
             }
             .print-note {
               border: 1px solid #000;
@@ -675,7 +740,7 @@ export const ServiceOrders = () => {
             }
             .print-summary {
               display: grid;
-              grid-template-columns: 1fr 1fr auto;
+              grid-template-columns: 1fr;
               gap: 6px;
               font-size: 0.66rem;
             }
@@ -683,15 +748,17 @@ export const ServiceOrders = () => {
               border: 1px solid #000;
               padding: 4px;
             }
-            .print-signatures {
+            .print-signature-footer {
               display: flex;
-              justify-content: space-between;
-              gap: 16px;
-              margin-top: 4px;
+              justify-content: flex-end;
+              gap: 12px;
+              margin-top: auto;
               font-size: 0.66rem;
+              align-items: flex-end;
             }
-            .print-signatures div {
-              flex: 1;
+            .print-signature-block {
+              flex: 0 0 240px;
+              max-width: 240px;
               text-align: center;
             }
             .print-signature-line {
@@ -699,9 +766,38 @@ export const ServiceOrders = () => {
               margin-top: 14px;
               padding-top: 2px;
             }
+            .print-date-fill {
+              min-width: 180px;
+              width: 180px;
+              margin-top: 14px;
+              text-align: center;
+            }
+            .print-date-line {
+              font-weight: 600;
+              letter-spacing: 0.08em;
+              margin-bottom: 2px;
+            }
+            .print-date-label {
+              display: block;
+            }
+            .print-cut-guide {
+              display: flex;
+              align-items: center;
+              gap: 6px;
+              font-size: 0.55rem;
+              text-transform: uppercase;
+              letter-spacing: 0.06em;
+              color: #444;
+            }
+            .print-cut-guide::before,
+            .print-cut-guide::after {
+              content: '';
+              flex: 1;
+              border-top: 1px dashed #666;
+            }
           `}</style>
           <div className="print-wrapper">
-            {['Via do cliente', 'Via do entregador'].map((label) => {
+            {[0, 1].map((_, index) => {
               const companyName = 'Bella Design'
               const osNumber = orderForPrint.order?.code ?? orderForPrint.id.slice(0, 8).toUpperCase()
               const customerName =
@@ -711,152 +807,102 @@ export const ServiceOrders = () => {
               const customerPhone = normalizeText(customerForPrint?.phone) || 'Não informado'
               const customerEmail = normalizeText(customerForPrint?.email) || 'Não informado'
               const customerAddress = normalizeText(customerForPrint?.address) || 'Não informado'
+              const notesText = normalizeText(orderForPrint.notes)
 
               return (
-                <article key={label} className="print-copy">
-                  <div className="print-header">
-                    <div>
-                      <p className="print-company">{companyName}</p>
-                      <p className="print-subtitle">Ordem de serviço de marcenaria</p>
+                <Fragment key={index}>
+                  <article className="print-copy">
+                    <div className="print-header">
+                      <div>
+                        <p className="print-company">{companyName}</p>
+                        <p className="print-subtitle">Documento de atendimento e entrega</p>
+                      </div>
+                      <div className="print-identifier">
+                        <span>OS Nº</span>
+                        <strong>{osNumber}</strong>
+                      </div>
                     </div>
-                    <div className="print-identifier">
-                      <span>OS Nº</span>
-                      <strong>{osNumber}</strong>
-                    </div>
-                  </div>
 
-                  <div className="print-info-grid">
-                    <table className="print-info">
-                      <tbody>
-                        <tr>
-                          <td>Cliente</td>
-                          <td>{customerName}</td>
-                        </tr>
-                        <tr>
-                          <td>Telefone</td>
-                          <td>{customerPhone}</td>
-                        </tr>
-                        <tr>
-                          <td>Endereço</td>
-                          <td>{customerAddress}</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                    <table className="print-info">
-                      <tbody>
-                        <tr>
-                          <td>Email</td>
-                          <td>{customerEmail}</td>
-                        </tr>
-                        <tr>
-                          <td>Data</td>
-                          <td>{formatDate(orderForPrint.scheduledDate)}</td>
-                        </tr>
-                        <tr>
-                          <td>Resp.</td>
-                          <td>{normalizeText(orderForPrint.responsible) || 'Não informado'}</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="print-sections-grid">
-                    <section className="print-section">
-                      <h4>Descrição do produto</h4>
-                      <table className="print-items">
-                        <thead>
-                          <tr>
-                            <th style={{ width: '44%' }}>Descrição</th>
-                            <th style={{ width: '12%' }}>Qtd</th>
-                            <th style={{ width: '22%' }}>Vlr. unit.</th>
-                            <th style={{ width: '22%' }}>Subtotal</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {printableProductItems.length ? (
-                            printableProductItems.map((item) => (
-                              <tr key={item.id ?? item.description}>
-                                <td>{item.description}</td>
-                                <td>{item.quantity}</td>
-                                <td>{formatCurrency(item.unitPrice)}</td>
-                                <td>{formatCurrency(item.unitPrice * item.quantity)}</td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr>
-                              <td colSpan={4}>Nenhum produto vinculado.</td>
-                            </tr>
-                          )}
-                        </tbody>
-                        <tfoot>
-                          <tr>
-                            <td colSpan={4}>Total dos produtos: {formatCurrency(productsTotal)}</td>
-                          </tr>
-                        </tfoot>
-                      </table>
+                    <section className="print-client-section">
+                      <h4 className="print-client-title">Dados do cliente</h4>
+                      <div className="print-client-grid">
+                        <div className="print-client-item">
+                          <span className="print-client-label">Cliente</span>
+                          <span className="print-client-value">{customerName}</span>
+                        </div>
+                        <div className="print-client-item">
+                          <span className="print-client-label">Telefone</span>
+                          <span className="print-client-value">{customerPhone}</span>
+                        </div>
+                        <div className="print-client-item">
+                          <span className="print-client-label">Email</span>
+                          <span className="print-client-value">{customerEmail}</span>
+                        </div>
+                        <div className="print-client-item">
+                          <span className="print-client-label">Data programada</span>
+                          <span className="print-client-value">{formatDate(orderForPrint.scheduledDate)}</span>
+                        </div>
+                        <div className="print-client-item">
+                          <span className="print-client-label">Responsável</span>
+                          <span className="print-client-value">{normalizeText(orderForPrint.responsible) || 'Não informado'}</span>
+                        </div>
+                        <div className="print-client-item print-client-item-full">
+                          <span className="print-client-label">Endereço</span>
+                          <span className="print-client-value">{customerAddress}</span>
+                        </div>
+                      </div>
                     </section>
 
-                    <section className="print-section">
-                      <h4>Soma dos itens adicionais</h4>
-                      <table className="print-items">
-                        <thead>
-                          <tr>
-                            <th style={{ width: '44%' }}>Descrição</th>
-                            <th style={{ width: '12%' }}>Qtd</th>
-                            <th style={{ width: '22%' }}>Vlr. unit.</th>
-                            <th style={{ width: '22%' }}>Subtotal</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {printableAdditionalItems.length ? (
-                            printableAdditionalItems.map((item) => (
-                              <tr key={item.id ?? item.description}>
-                                <td>{item.description}</td>
-                                <td>{item.quantity}</td>
-                                <td>{formatCurrency(item.unitPrice)}</td>
-                                <td>{formatCurrency(item.unitPrice * item.quantity)}</td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr>
-                              <td colSpan={4}>Nenhum item adicional informado.</td>
-                            </tr>
-                          )}
-                        </tbody>
-                        <tfoot>
-                          <tr>
-                            <td colSpan={4}>Soma dos itens adicionais: {formatCurrency(additionalItemsTotal)}</td>
-                          </tr>
-                        </tfoot>
-                      </table>
+                    <section className="print-list-section">
+                      <h4 className="print-list-title">Produtos e serviços</h4>
+                      <div className="print-list-body">
+                        {printableLineItems.length ? (
+                          printableLineItems.map((item) => (
+                            <div key={`${item.kind}-${item.id ?? item.description}`} className="print-list-row">
+                              <div className="print-list-desc">
+                                <span className="print-list-kind">{item.kind}</span>
+                                <span>{item.description}</span>
+                              </div>
+                              <div className="print-list-values">
+                                <span>{item.quantity}x</span>
+                                <span>{formatCurrency(item.unitPrice)}</span>
+                                <span>{formatCurrency(item.unitPrice * item.quantity)}</span>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="print-list-empty">Nenhum item listado.</div>
+                        )}
+                      </div>
+                      <div className="print-list-total">Total: {formatCurrency(printableGrandTotal)}</div>
                     </section>
-                  </div>
 
-                  <div className="print-note">
-                    <strong>Observações: </strong>
-                    {normalizeText(orderForPrint.notes) || 'Não informado'}
-                  </div>
+                    {notesText && (
+                      <div className="print-note">
+                        <strong>Observações: </strong>
+                        {notesText}
+                      </div>
+                    )}
 
-                  <div className="print-summary">
-                    <span>
-                      Total da OS:
-                      <strong>{formatCurrency(printableGrandTotal)}</strong>
-                    </span>
-                    <span>Emissão: {formatDate(orderForPrint.createdAt)}</span>
-                    <span>
-                      {label}
-                    </span>
-                  </div>
-
-                  <div className="print-signatures">
-                    <div>
-                      <div className="print-signature-line">Cliente</div>
+                    <div className="print-summary">
+                      <span>
+                        Total da OS:
+                        <strong>{formatCurrency(printableGrandTotal)}</strong>
+                      </span>
                     </div>
-                    <div>
-                      <div className="print-signature-line">Técnico</div>
+
+                    <div className="print-signature-footer">
+                      <div className="print-signature-block">
+                        <div className="print-signature-line">Cliente</div>
+                      </div>
+                      <div className="print-date-fill">
+                        <div className="print-date-line">____/____/______</div>
+                        <span className="print-date-label">Data</span>
+                      </div>
                     </div>
-                  </div>
-                </article>
+                  </article>
+                  {index === 0 && <div className="print-cut-guide">Corte aqui</div>}
+                </Fragment>
               )
             })}
           </div>
