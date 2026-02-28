@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useMemo } from 'react'
-import { useFieldArray, useForm } from 'react-hook-form'
+import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import type { Resolver } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -54,7 +54,6 @@ export const ServiceOrderForm = ({ customers, orders, defaultValues, onSubmit, i
     control,
     formState: { errors },
     setValue,
-    watch,
   } = useForm<ServiceOrderFormValues>({
     resolver: zodResolver(serviceOrderSchema) as Resolver<ServiceOrderFormValues>,
     defaultValues: initialDefaults,
@@ -69,8 +68,8 @@ export const ServiceOrderForm = ({ customers, orders, defaultValues, onSubmit, i
     reset(initialDefaults)
   }, [initialDefaults, reset])
 
-  const selectedCustomerId = watch('customerId')
-  const selectedOrderId = watch('orderId')
+  const selectedCustomerId = useWatch({ control, name: 'customerId' }) ?? ''
+  const selectedOrderId = useWatch({ control, name: 'orderId' }) ?? ''
   const selectedOrder = orders.find((order) => order.id === selectedOrderId)
   const filteredOrders = orders.filter((order) => !selectedCustomerId || order.customerId === selectedCustomerId)
 
