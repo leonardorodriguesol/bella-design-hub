@@ -62,7 +62,8 @@ infra/     Docker Compose, SQL de seed e utilitários
 - **Observabilidade e runtime**:
   - Health check em `/health`.
   - Swagger habilitado em ambiente de desenvolvimento.
-  - CORS por `Cors__AllowedOrigins` (origens separadas por `;`).
+  - CORS por `Cors__AllowedOrigins` (origens separadas por `;`), com fallback local fora de produção.
+  - Migrações automáticas controladas por `Database__ApplyMigrationsOnStartup`.
 
 ## Frontend
 
@@ -104,6 +105,15 @@ cd backend
 dotnet ef database update --project src/BellaDesignHub.Infrastructure/BellaDesignHub.Infrastructure.csproj --startup-project src/BellaDesignHub.Api/BellaDesignHub.Api.csproj
 ```
 
+Comportamento de startup da API:
+
+- `Development`: se `Cors__AllowedOrigins` não estiver configurada, usa fallback local seguro (`http://localhost:5173`, `http://127.0.0.1:5173`, `http://localhost:4173`, `http://127.0.0.1:4173`).
+- `Production`: falha na inicialização se `Cors__AllowedOrigins` não estiver configurada.
+- Migrações automáticas:
+  - padrão `true` em `Development`;
+  - padrão `false` em `Production` e demais ambientes;
+  - pode ser forçado por `Database__ApplyMigrationsOnStartup=true|false`.
+
 ### Frontend
 
 ```bash
@@ -136,6 +146,7 @@ Serviços:
 |----------|----------|---------|
 | `ConnectionStrings__DefaultConnection` | API | `Host=postgres;Port=5432;Database=bella_design_hub;Username=postgres;Password=postgres` |
 | `Cors__AllowedOrigins` | API | `http://localhost:4173;http://localhost:5173` |
+| `Database__ApplyMigrationsOnStartup` | API | `false` (produção) / `true` (desenvolvimento) |
 | `VITE_API_BASE_URL` | Frontend | `http://localhost:8080` |
 | `BELLAHUB_BACKEND_IMAGE` | Docker Compose | `usuario/bella-design-hub-backend:latest` |
 | `BELLAHUB_FRONT_IMAGE` | Docker Compose | `usuario/bella-design-hub-frontend:latest` |
